@@ -1,0 +1,10 @@
+{
+  "debounceMs": 2500,
+  "targets": [
+    {
+      "name": "Apple Music",
+      "processes": ["AppleMusic", "AMPLibraryAgent"],
+      "launch": "shell:AppsFolder\\AppleInc.AppleMusicWin_nzyj5cx40ttqa!App"
+    }
+  ]
+}
