@@ -129,64 +129,43 @@ static class Program
         var pauseItem = new ToolStripMenuItem("Pause") { CheckOnClick = true };
         pauseItem.CheckedChanged += (_, _) => watcher.Paused = pauseItem.Checked;
 
-        var startupItem = new ToolStripMenuItem("Start with Windows") { Checked = IsStartupEnabled() };
-        startupItem.Click += (_, _) =>
-        {
-            var enable = !startupItem.Checked;
-            SetStartup(enable);
-            startupItem.Checked = IsStartupEnabled();
-            SaveSetting(configPath, "startWithWindows", enable);
-        };
+        var trayIcon = LoadTrayIcon();
+        var settingsOpen = false;
 
-        var resumeOff = new ToolStripMenuItem("Off");
-        var resumeAlbum = new ToolStripMenuItem("Reopen album");
-        var resumePlay = new ToolStripMenuItem("Reopen album and play");
-        var resumeItems = new[] { resumeOff, resumeAlbum, resumePlay };
-
-        void ShowResumeMode()
+        void OpenSettings()
         {
-            var c = watcher.Config;
-            resumeOff.Checked = !c.ResumeAlbum && !c.ResumePlayback;
-            resumePlay.Checked = c.ResumePlayback;
-            resumeAlbum.Checked = c.ResumeAlbum && !c.ResumePlayback;
+            if (settingsOpen) return;
+            settingsOpen = true;
+            try
+            {
+                using var form = new SettingsForm(watcher.Config, IsStartupEnabled(), configPath, trayIcon);
+                if (form.ShowDialog() != DialogResult.OK) return;
+
+                var result = form.Result;
+                watcher.Update(_ => result);
+                SetStartup(result.StartWithWindows);
+                SaveSettings(configPath, result);
+            }
+            finally { settingsOpen = false; }
         }
 
-        void SetResumeMode(bool album, bool play)
-        {
-            watcher.Update(c => c with { ResumeAlbum = album, ResumePlayback = play });
-            SaveSetting(configPath, "resumeAlbum", album);
-            SaveSetting(configPath, "resumePlayback", play);
-            ShowResumeMode();
-        }
-
-        resumeOff.Click += (_, _) => SetResumeMode(false, false);
-        resumeAlbum.Click += (_, _) => SetResumeMode(true, false);
-        resumePlay.Click += (_, _) => SetResumeMode(true, true);
-        ShowResumeMode();
-
-        var resumeMenu = new ToolStripMenuItem("Resume after switch (Apple Music)");
-        resumeMenu.DropDownItems.AddRange(resumeItems);
-
-        var openConfigItem = new ToolStripMenuItem("Open config file");
-        openConfigItem.Click += (_, _) =>
-        {
-            try { Process.Start(new ProcessStartInfo(configPath) { UseShellExecute = true }); }
-            catch { }
-        };
+        var settingsItem = new ToolStripMenuItem("Settings…");
+        settingsItem.Click += (_, _) => OpenSettings();
 
         var exitItem = new ToolStripMenuItem("Exit");
         exitItem.Click += (_, _) => Application.Exit();
 
         var menu = new ContextMenuStrip();
-        menu.Items.AddRange([pauseItem, resumeMenu, startupItem, openConfigItem, new ToolStripSeparator(), exitItem]);
+        menu.Items.AddRange([pauseItem, settingsItem, new ToolStripSeparator(), exitItem]);
 
         using var tray = new NotifyIcon
         {
-            Icon = LoadTrayIcon(),
+            Icon = trayIcon,
             Text = AppName,
             ContextMenuStrip = menu,
             Visible = true
         };
+        tray.DoubleClick += (_, _) => OpenSettings();
 
         Application.Run();
         tray.Visible = false;
@@ -222,12 +201,17 @@ static class Program
         SetStartup(true);
     }
 
-    static void SaveSetting(string configPath, string key, bool value)
+    static void SaveSettings(string configPath, Config c)
     {
         try
         {
             var node = System.Text.Json.Nodes.JsonNode.Parse(File.ReadAllText(configPath))!.AsObject();
-            node[key] = value;
+            node["debounceMs"] = c.DebounceMs;
+            node["resumeAlbum"] = c.ResumeAlbum;
+            node["resumePlayback"] = c.ResumePlayback;
+            node["storefront"] = c.Storefront;
+            node["debug"] = c.Debug;
+            node["startWithWindows"] = c.StartWithWindows;
             File.WriteAllText(configPath, node.ToJsonString(new JsonSerializerOptions { WriteIndented = true }));
         }
         catch { }

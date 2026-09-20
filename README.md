@@ -64,7 +64,9 @@ bin\Release\net10.0-windows10.0.19041.0\audio-follow.exe
 
 ## Tray menu
 
-Right-click the tray icon for: Pause, Resume after switch (Off / Reopen album / Reopen album and play), Start with Windows, Open config file, and Exit. Resume and startup choices apply immediately and are saved to `config.json`. Other settings (debounce, targets, storefront, debug logging) are edited in the config file and take effect on the next launch.
+Right-click the tray icon for Pause, Settings and Exit. Double-clicking the icon opens Settings.
+
+The Settings dialog covers the resume mode (Off / Reopen album / Reopen album and play), start at login, the storefront used for song lookup, the wait after a device change, and the debug log. Changes apply immediately when you click OK and are saved to `config.json`. The target apps list is edited in the config file (use "Edit config file…" in the dialog) and needs a restart of the app.
 
 ## Limitations
 
