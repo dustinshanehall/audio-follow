@@ -21,13 +21,15 @@ Edit `config.json` next to the executable:
     {
       "name": "Apple Music",
       "processes": ["AppleMusic", "AMPLibraryAgent"],
-      "launch": "shell:AppsFolder\\AppleInc.AppleMusicWin_nzyj5cx40ttqa!App"
+      "launch": "shell:AppsFolder\\AppleInc.AppleMusicWin_nzyj5cx40ttqa!App",
+      "resume": "appleMusic"
     }
   ]
 }
 ```
 
 - `processes`: process names (without `.exe`) to close before relaunching.
+- `resume`: optional; `"appleMusic"` enables the resume options below for this target.
 - `launch`: what to start afterwards. For Store apps use `shell:AppsFolder\<AppUserModelID>` (find IDs with `Get-StartApps` in PowerShell). For regular apps use the path to the `.exe`.
 
 ## Resuming what was playing (Apple Music, optional)
@@ -60,7 +62,7 @@ bin\Release\net10.0-windows10.0.19041.0\audio-follow.exe
 
 ## Start at login
 
-`startWithWindows` (default `true`) registers the app to start at login. On launch, the app registers itself only if no working registration exists, so running a build from another folder won't override an installed copy. The tray menu's "Start with Windows" toggle changes the registration and updates this setting in `config.json`.
+`startWithWindows` (default `true`) registers the app to start at login. On launch, the app registers itself only if no working registration exists, so running a build from another folder won't override an installed copy. The "Start with Windows" checkbox in Settings changes the registration and updates this setting in `config.json`.
 
 ## Tray menu
 
@@ -73,3 +75,9 @@ The Settings dialog covers the resume mode (Off / Reopen album / Reopen album an
 - Playback restarts from the beginning of the song; the position is not restored.
 - It reacts to the default playback device (Multimedia role) only.
 - Resume depends on the names Apple Music exposes to UI Automation and may break after app updates.
+
+## License
+
+Apache License 2.0. See [LICENSE](LICENSE). Copyright 2026 Dustin Hall.
+
+Apple Music is a trademark of Apple Inc. This project is not affiliated with or endorsed by Apple.
