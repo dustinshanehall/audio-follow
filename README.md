@@ -41,14 +41,26 @@ How it works: the song title and "artist - album" are read from the Windows medi
 
 `storefront` selects the country catalog used for the lookup. Set `debug` to `true` to write `audio-follow.log` next to the executable.
 
-## Build and run
+## Install
 
-Requires the .NET 10 SDK on Windows 10 (19041) or later.
+Requires the .NET 10 SDK on Windows 10 (19041) or later. No prebuilt binaries are provided; build from source:
+
+```
+pwsh tools\install.ps1
+```
+
+This publishes to `%LOCALAPPDATA%\audio-follow`, keeps any existing `config.json` there, and starts the app. Re-run it to update. `pwsh tools\install.ps1 -Uninstall` stops the app and removes the startup entry and the folder.
+
+To just build and run from the source folder instead:
 
 ```
 dotnet build -c Release
 bin\Release\net10.0-windows10.0.19041.0\audio-follow.exe
 ```
+
+## Start at login
+
+`startWithWindows` (default `true`) registers the app to start at login. On launch, the app registers itself only if no working registration exists, so running a build from another folder won't override an installed copy. The tray menu's "Start with Windows" toggle changes the registration and updates this setting in `config.json`.
 
 The tray icon menu offers Pause, Start with Windows, and Exit.
 

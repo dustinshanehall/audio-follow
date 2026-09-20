@@ -4,6 +4,7 @@
   "resumePlayback": false,
   "storefront": "us",
   "debug": false,
+  "startWithWindows": true,
   "targets": [
     {
       "name": "Apple Music",

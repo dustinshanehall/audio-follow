@@ -14,7 +14,8 @@ record Config(
     bool ResumeAlbum = false,
     bool ResumePlayback = false,
     string Storefront = "us",
-    bool Debug = false);
+    bool Debug = false,
+    bool StartWithWindows = true);
 
 sealed class Watcher : IMMNotificationClient, IDisposable
 {
@@ -118,6 +119,8 @@ static class Program
             return;
         }
 
+        ApplyStartupSetting(config.StartWithWindows);
+
         using var watcher = new Watcher(config);
 
         var pauseItem = new ToolStripMenuItem("Pause") { CheckOnClick = true };
@@ -126,8 +129,10 @@ static class Program
         var startupItem = new ToolStripMenuItem("Start with Windows") { Checked = IsStartupEnabled() };
         startupItem.Click += (_, _) =>
         {
-            SetStartup(!startupItem.Checked);
+            var enable = !startupItem.Checked;
+            SetStartup(enable);
             startupItem.Checked = IsStartupEnabled();
+            SaveStartupSetting(configPath, enable);
         };
 
         var exitItem = new ToolStripMenuItem("Exit");
@@ -164,6 +169,29 @@ static class Program
     {
         using var key = Registry.CurrentUser.OpenSubKey(RunKey);
         return key?.GetValue(AppName) != null;
+    }
+
+    // Applies the config setting at launch without clobbering a working registration
+    // that points at another copy (e.g. the installed one while running a dev build).
+    static void ApplyStartupSetting(bool enable)
+    {
+        if (!enable) { SetStartup(false); return; }
+
+        using var key = Registry.CurrentUser.OpenSubKey(RunKey);
+        var existing = (key?.GetValue(AppName) as string)?.Trim('"');
+        if (existing != null && File.Exists(existing)) return;
+        SetStartup(true);
+    }
+
+    static void SaveStartupSetting(string configPath, bool enable)
+    {
+        try
+        {
+            var node = System.Text.Json.Nodes.JsonNode.Parse(File.ReadAllText(configPath))!.AsObject();
+            node["startWithWindows"] = enable;
+            File.WriteAllText(configPath, node.ToJsonString(new JsonSerializerOptions { WriteIndented = true }));
+        }
+        catch { }
     }
 
     static void SetStartup(bool enable)
