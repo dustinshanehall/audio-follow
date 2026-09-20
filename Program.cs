@@ -138,7 +138,7 @@ static class Program
 
         using var tray = new NotifyIcon
         {
-            Icon = SystemIcons.Application,
+            Icon = LoadTrayIcon(),
             Text = AppName,
             ContextMenuStrip = menu,
             Visible = true
@@ -146,6 +146,18 @@ static class Program
 
         Application.Run();
         tray.Visible = false;
+    }
+
+    static System.Drawing.Icon LoadTrayIcon()
+    {
+        try
+        {
+            using var stream = typeof(Program).Assembly.GetManifestResourceStream("app.ico");
+            if (stream != null)
+                return new System.Drawing.Icon(stream, SystemInformation.SmallIconSize);
+        }
+        catch { }
+        return System.Drawing.SystemIcons.Application;
     }
 
     static bool IsStartupEnabled()

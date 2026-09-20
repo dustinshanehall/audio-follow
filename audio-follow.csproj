@@ -12,7 +12,12 @@
     <ApplicationHighDpiMode>SystemAware</ApplicationHighDpiMode>
     <InvariantGlobalization>true</InvariantGlobalization>
     <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+    <ApplicationIcon>Assets\app.ico</ApplicationIcon>
   </PropertyGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Assets\app.ico" LogicalName="app.ico" />
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="NAudio.Wasapi" Version="2.2.1" />
