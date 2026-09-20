@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.IO;
 using System.Text.Json;
 using Microsoft.Win32;
 using NAudio.CoreAudioApi;
@@ -6,8 +7,14 @@ using NAudio.CoreAudioApi.Interfaces;
 
 namespace AudioFollow;
 
-record Target(string Name, string[] Processes, string Launch);
-record Config(int DebounceMs, Target[] Targets);
+record Target(string Name, string[] Processes, string Launch, string? Resume = null);
+record Config(
+    int DebounceMs,
+    Target[] Targets,
+    bool ResumeAlbum = false,
+    bool ResumePlayback = false,
+    string Storefront = "us",
+    bool Debug = false);
 
 sealed class Watcher : IMMNotificationClient, IDisposable
 {
@@ -46,6 +53,13 @@ sealed class Watcher : IMMNotificationClient, IDisposable
                     .ToList();
                 if (running.Count == 0) continue;
 
+                NowPlaying? nowPlaying = null;
+                if ((_config.ResumeAlbum || _config.ResumePlayback) && target.Resume == "appleMusic")
+                {
+                    nowPlaying = AppleMusicResume.Capture();
+                    Log.Write(_config, $"capture: {(nowPlaying == null ? "null" : $"'{nowPlaying.Title}' | '{nowPlaying.ArtistAlbum}' | playing={nowPlaying.WasPlaying}")}");
+                }
+
                 foreach (var p in running)
                 {
                     try { p.CloseMainWindow(); } catch { }
@@ -63,6 +77,8 @@ sealed class Watcher : IMMNotificationClient, IDisposable
                     Process.Start(new ProcessStartInfo("explorer.exe", target.Launch) { UseShellExecute = false });
                 }
                 catch { }
+
+                if (nowPlaying != null) AppleMusicResume.Resume(nowPlaying, _config);
             }
         }
     }

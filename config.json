@@ -1,10 +1,15 @@
 {
   "debounceMs": 2500,
+  "resumeAlbum": false,
+  "resumePlayback": false,
+  "storefront": "us",
+  "debug": false,
   "targets": [
     {
       "name": "Apple Music",
       "processes": ["AppleMusic", "AMPLibraryAgent"],
-      "launch": "shell:AppsFolder\\AppleInc.AppleMusicWin_nzyj5cx40ttqa!App"
+      "launch": "shell:AppsFolder\\AppleInc.AppleMusicWin_nzyj5cx40ttqa!App",
+      "resume": "appleMusic"
     }
   ]
 }

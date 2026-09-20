@@ -30,18 +30,30 @@ Edit `config.json` next to the executable:
 - `processes`: process names (without `.exe`) to close before relaunching.
 - `launch`: what to start afterwards. For Store apps use `shell:AppsFolder\<AppUserModelID>` (find IDs with `Get-StartApps` in PowerShell). For regular apps use the path to the `.exe`.
 
+## Resuming what was playing (Apple Music, optional)
+
+Apple Music restores nothing after a relaunch: no queue, no song. Two optional settings, both off by default, can bring back what was playing. They only apply to targets with `"resume": "appleMusic"`.
+
+- `resumeAlbum`: reopens the album page of the song that was playing. No UI automation and nothing is played.
+- `resumePlayback`: does the above, then double-clicks the song's row to start it from the beginning. This uses Windows UI Automation and simulated mouse input: it briefly brings Apple Music to the front and moves the mouse pointer, so don't click in the window while it runs. It only plays if a song was playing (not paused) before the switch.
+
+How it works: the song title and "artist - album" are read from the Windows media controls before the app is closed. After the relaunch, the album is located through Apple's public iTunes Search API and opened with a `music://` link. Enabling either setting therefore sends the artist, album and song title to Apple's API. If any step fails, the app is simply left as it launched.
+
+`storefront` selects the country catalog used for the lookup. Set `debug` to `true` to write `audio-follow.log` next to the executable.
+
 ## Build and run
 
-Requires the .NET 10 SDK.
+Requires the .NET 10 SDK on Windows 10 (19041) or later.
 
 ```
 dotnet build -c Release
-bin\Release\net10.0-windows\audio-follow.exe
+bin\Release\net10.0-windows10.0.19041.0\audio-follow.exe
 ```
 
 The tray icon menu offers Pause, Start with Windows, and Exit.
 
 ## Limitations
 
-- The app is relaunched, not resumed: the queue and playback position are lost.
+- Playback restarts from the beginning of the song; the position is not restored.
 - It reacts to the default playback device (Multimedia role) only.
+- Resume depends on the names Apple Music exposes to UI Automation and may break after app updates.
