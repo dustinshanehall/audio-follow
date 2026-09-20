@@ -20,10 +20,13 @@ record Config(
 sealed class Watcher : IMMNotificationClient, IDisposable
 {
     readonly MMDeviceEnumerator _enumerator = new();
-    readonly Config _config;
+    volatile Config _config;
     readonly System.Threading.Timer _debounce;
     readonly object _gate = new();
     public volatile bool Paused;
+
+    public Config Config => _config;
+    public void Update(Func<Config, Config> change) => _config = change(_config);
 
     public Watcher(Config config)
     {
@@ -132,14 +135,50 @@ static class Program
             var enable = !startupItem.Checked;
             SetStartup(enable);
             startupItem.Checked = IsStartupEnabled();
-            SaveStartupSetting(configPath, enable);
+            SaveSetting(configPath, "startWithWindows", enable);
+        };
+
+        var resumeOff = new ToolStripMenuItem("Off");
+        var resumeAlbum = new ToolStripMenuItem("Reopen album");
+        var resumePlay = new ToolStripMenuItem("Reopen album and play");
+        var resumeItems = new[] { resumeOff, resumeAlbum, resumePlay };
+
+        void ShowResumeMode()
+        {
+            var c = watcher.Config;
+            resumeOff.Checked = !c.ResumeAlbum && !c.ResumePlayback;
+            resumePlay.Checked = c.ResumePlayback;
+            resumeAlbum.Checked = c.ResumeAlbum && !c.ResumePlayback;
+        }
+
+        void SetResumeMode(bool album, bool play)
+        {
+            watcher.Update(c => c with { ResumeAlbum = album, ResumePlayback = play });
+            SaveSetting(configPath, "resumeAlbum", album);
+            SaveSetting(configPath, "resumePlayback", play);
+            ShowResumeMode();
+        }
+
+        resumeOff.Click += (_, _) => SetResumeMode(false, false);
+        resumeAlbum.Click += (_, _) => SetResumeMode(true, false);
+        resumePlay.Click += (_, _) => SetResumeMode(true, true);
+        ShowResumeMode();
+
+        var resumeMenu = new ToolStripMenuItem("Resume after switch (Apple Music)");
+        resumeMenu.DropDownItems.AddRange(resumeItems);
+
+        var openConfigItem = new ToolStripMenuItem("Open config file");
+        openConfigItem.Click += (_, _) =>
+        {
+            try { Process.Start(new ProcessStartInfo(configPath) { UseShellExecute = true }); }
+            catch { }
         };
 
         var exitItem = new ToolStripMenuItem("Exit");
         exitItem.Click += (_, _) => Application.Exit();
 
         var menu = new ContextMenuStrip();
-        menu.Items.AddRange([pauseItem, startupItem, new ToolStripSeparator(), exitItem]);
+        menu.Items.AddRange([pauseItem, resumeMenu, startupItem, openConfigItem, new ToolStripSeparator(), exitItem]);
 
         using var tray = new NotifyIcon
         {
@@ -183,12 +222,12 @@ static class Program
         SetStartup(true);
     }
 
-    static void SaveStartupSetting(string configPath, bool enable)
+    static void SaveSetting(string configPath, string key, bool value)
     {
         try
         {
             var node = System.Text.Json.Nodes.JsonNode.Parse(File.ReadAllText(configPath))!.AsObject();
-            node["startWithWindows"] = enable;
+            node[key] = value;
             File.WriteAllText(configPath, node.ToJsonString(new JsonSerializerOptions { WriteIndented = true }));
         }
         catch { }

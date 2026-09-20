@@ -62,7 +62,9 @@ bin\Release\net10.0-windows10.0.19041.0\audio-follow.exe
 
 `startWithWindows` (default `true`) registers the app to start at login. On launch, the app registers itself only if no working registration exists, so running a build from another folder won't override an installed copy. The tray menu's "Start with Windows" toggle changes the registration and updates this setting in `config.json`.
 
-The tray icon menu offers Pause, Start with Windows, and Exit.
+## Tray menu
+
+Right-click the tray icon for: Pause, Resume after switch (Off / Reopen album / Reopen album and play), Start with Windows, Open config file, and Exit. Resume and startup choices apply immediately and are saved to `config.json`. Other settings (debounce, targets, storefront, debug logging) are edited in the config file and take effect on the next launch.
 
 ## Limitations
 
