@@ -107,6 +107,9 @@ static class Program
         if (!isNew) return;
 
         ApplicationConfiguration.Initialize();
+#pragma warning disable WFO5001
+        Application.SetColorMode(SystemColorMode.System);
+#pragma warning restore WFO5001
 
         var configPath = Path.Combine(AppContext.BaseDirectory, "config.json");
         Config config;
